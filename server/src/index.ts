@@ -1,4 +1,3 @@
-// src/index.ts
 import 'dotenv/config'; // Load environment variables from .env
 import express from "express";
 import mongoose from "mongoose";
