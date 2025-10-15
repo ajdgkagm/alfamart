@@ -1,4 +1,4 @@
-import InventoryRecordModel from "../schema/inventory-record.js";
+import InventoryRecordModel from "../src/schema/inventory-record.js";
 export async function checkExpiringInventory() {
     const now = new Date();
     // Fetch all records
