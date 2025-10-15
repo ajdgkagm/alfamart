@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useTable, Column, CellProps } from "react-table";
+import { useTable} from "react-table";
+import type { Column, CellProps } from "react-table";
 import "./WorkSchedule.css";
 
 interface WorkScheduleRow {

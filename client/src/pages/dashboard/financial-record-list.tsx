@@ -1,6 +1,9 @@
 import { useFinancialRecords, type FinancialRecord } from "../../contexts/financial-record-context";
-import { useTable, Column, CellProps } from "react-table";
+// eslint-disable-next-line
+import { useTable } from "react-table";
 import { useMemo, useState } from "react";
+import type { Column, CellProps } from "react-table";
+
 
 interface EditableCellProps extends CellProps<FinancialRecord> {
   updateRecord: (rowIndex: number, columnId: string, value: any) => void;

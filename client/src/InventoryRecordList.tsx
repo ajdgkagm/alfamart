@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { useTable, Column } from "react-table";
+// eslint-disable-next-line
+import { useTable } from "react-table";
+import type { Column } from "react-table";
 import { useInventoryRecords, type InventoryRecord } from "./contexts/inventory-record-context";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
