@@ -1,0 +1,86 @@
+/* Sidebar container */
+.sidenav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;         /* Full height */
+  width: 220px;          /* Sidebar width */
+  background-color: #1f2937; /* Dark gray */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Logo section */
+.sidenav-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* center logo vertically */
+  height: 120px;           /* control how tall this section is */
+  padding: 0;              /* remove extra padding */
+}
+.sidenav-logo .logo {
+  max-height: 100%;   /* logo fills the section height */
+  max-width: 100%;    /* prevent overflow */
+  object-fit: contain; /* keep aspect ratio */
+}
+
+
+.sidenav-logo h2 {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Navigation links */
+.sidenav-links {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.nav-item {
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #d1d5db;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #374151;
+  color: white;
+}
+
+.nav-item.active {
+  background-color: #4b5563;
+  color: white;
+  font-weight: bold;
+}
+
+/* Footer */
+.sidenav-footer {
+  padding: 20px;
+  border-top: 1px solid #374151;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.logout-btn:hover {
+  background-color: #b91c1c;
+}
+
+.custom-avatar {
+  width: 100%;       /* wider */
+  height: 100%;      /* shorter → rectangle */
+  border-radius: 0;  /* removes the round shape */
+}
