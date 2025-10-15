@@ -1,24 +1,16 @@
 {
   "compilerOptions": {
     "rootDir": "./src",
+    "outDir": "./dist",
     "module": "nodenext",
-    "moduleResolution": "nodenext", // ✅ Important for ESM imports to work correctly
-    "target": "esnext",
-
-    "types": ["node","cors"],
-
+    "moduleResolution": "nodenext",
+    "target": "ES2020",
+    "types": ["node"],
+    "strict": true,
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
-    "strict": true,
-    "jsx": "react-jsx",
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
     "skipLibCheck": true
-  }
+  },
+  "include": ["src/**/*"]
 }

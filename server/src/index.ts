@@ -1,33 +1,46 @@
-import express, { Express } from "express";
+// src/index.ts
+import 'dotenv/config'; // Load environment variables from .env
+import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import inventoryRecordRouter from "./routes/inventory-records.js"; // ✅ note .js
-import financialRecordRouter from "./routes/financial-records.js"; // ✅ note .js
-import { checkExpiringInventory } from "./utils/checkExpiration.js"; // ✅ note .js
+import inventoryRecordRouter from "./routes/inventory-records.js";
+import financialRecordRouter from "./routes/financial-records.js";
+import { checkExpiringInventory } from "./utils/checkExpiration.js";
 
-const app: Express = express();
+const app = express();
 const port = process.env.PORT || 3001;
 
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Mount routers
+// Routers
 app.use("/inventory-records", inventoryRecordRouter);
 app.use("/financial-records", financialRecordRouter);
 
 // MongoDB connection
-const mongoURI = "mongodb+srv://ajdgkagm:7Ho1xmtbavYGkrgf@personalfinancetracker.o7dsynl.mongodb.net/";
+const mongoURI = process.env.MONGO_URI;
+if (!mongoURI) {
+  console.error("❌ MONGO_URI environment variable is not defined!");
+  process.exit(1);
+}
+
 mongoose
   .connect(mongoURI)
-  .then(() => console.log("Connected to MongoDB!"))
-  .catch((err) => console.error("Failed to connect to MongoDB", err));
+  .then(() => console.log("✅ Connected to MongoDB!"))
+  .catch((err) => console.error("❌ Failed to connect to MongoDB", err));
 
-// Schedule expiration check every hour
+// Scheduled job (runs every hour)
 setInterval(() => {
-  console.log("Checking for expiring inventory...");
-  checkExpiringInventory();
-}, 60 * 60 * 1000); // 1 hour
+  console.log("🕒 Checking for expiring inventory...");
+  try {
+    checkExpiringInventory();
+  } catch (err) {
+    console.error("❌ Error in expiration check:", err);
+  }
+}, 60 * 60 * 1000);
 
+// Start server
 app.listen(port, () => {
-  console.log(`Server running on PORT: ${port}`);
+  console.log(`🚀 Server running on PORT: ${port}`);
 });
