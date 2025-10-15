@@ -1,5 +1,5 @@
 import express from 'express';
-import FinancialRecordModel from '../schema/financial-record.js';
+import FinancialRecordModel from '../src/schema/financial-record.js';
 const router = express.Router();
 router.get("/getAllByUserID/:userId", async (req, res) => {
     try {

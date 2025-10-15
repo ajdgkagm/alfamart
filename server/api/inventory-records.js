@@ -1,7 +1,7 @@
 import express from "express";
 import PDFDocument from "pdfkit";
 import XLSX from "xlsx";
-import InventoryRecordModel from "../schema/inventory-record.js";
+import InventoryRecordModel from "../src/schema/inventory-record.js";
 const router = express.Router();
 /**
  * Helper: Mark expired records
