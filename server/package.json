@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p .",
-     "start": "node dist/index.js",
-     "dev": "cd server && nodemon --exec tsx src/index.ts"
+    "start": "node dist/index.js",
+     "dev": "nodemon --exec tsx src/index.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

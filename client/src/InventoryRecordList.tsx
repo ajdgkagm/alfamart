@@ -1,7 +1,6 @@
+// InventoryRecordList.tsx
 import React, { useMemo, useState } from "react";
-// eslint-disable-next-line
-import { useTable } from "react-table";
-import type { Column } from "react-table";
+import { useTable, type Column } from "react-table";
 import { useInventoryRecords, type InventoryRecord } from "./contexts/inventory-record-context";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -11,75 +10,29 @@ interface InventoryRecordListProps {
   userId: string;
 }
 
-interface EditableCellProps {
-  value: any;
-  rowIndex: number;
-  columnId: string;
-  updateRecord: (rowIndex: number, columnId: string, value: any) => void;
-  editable: boolean;
-}
-
-const EditableCell: React.FC<EditableCellProps> = ({
-  value: initialValue,
-  rowIndex,
-  columnId,
-  updateRecord,
-  editable,
-}) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(initialValue);
-
-  const onBlur = () => {
-    setIsEditing(false);
-    updateRecord(rowIndex, columnId, value);
-  };
-
-  return (
-    <div
-      onClick={() => editable && setIsEditing(true)}
-      style={{ cursor: editable ? "pointer" : "default" }}
-    >
-      {isEditing ? (
-        <input
-          value={value ?? ""}
-          onChange={(e) => setValue(e.target.value)}
-          autoFocus
-          onBlur={onBlur}
-          className="editable-input"
-        />
-      ) : (
-        value?.toString() ?? ""
-      )}
-    </div>
-  );
-};
-
-// Helper to format date as MM/DD/YYYY
+// Format date as DD/MM/YYYY
 const formatDate = (date: string | Date | undefined): string => {
   if (!date) return "";
   const d = new Date(date);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  });
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
-// Define the possible status values
 type StatusType = "expired" | "expiring_soon" | "active";
 
 export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId }) => {
-  const { inventoryRecords, updateRecord } = useInventoryRecords();
+  const { inventoryRecords, updateRecord, deleteRecord } = useInventoryRecords();
   const [filter, setFilter] = useState("");
+  const [editingCell, setEditingCell] = useState<{ rowIndex: number; columnId: string } | null>(null);
 
-  // Filter by userId
   const userRecords = useMemo(
-    () => inventoryRecords.filter((record) => record.userId === userId),
+    () => inventoryRecords.filter((r) => r.userId === userId),
     [inventoryRecords, userId]
   );
 
-  // Calculate status and daysLeft
   const calculateStatus = (expiration?: string) => {
     if (!expiration) return { status: "active" as StatusType, daysLeft: "N/A" };
     const now = new Date();
@@ -90,16 +43,13 @@ export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId
     return { status: "active" as StatusType, daysLeft: diffDays };
   };
 
-  // Records with status calculated automatically
   const recordsWithStatus = useMemo(() => {
     const order: Record<StatusType, number> = { expired: 0, expiring_soon: 1, active: 2 };
-
     return userRecords
-      .map((record) => ({ ...record, ...calculateStatus(record.expiration) }))
+      .map((r) => ({ ...r, ...calculateStatus(r.expiration) }))
       .sort((a, b) => order[a.status] - order[b.status]);
   }, [userRecords]);
 
-  // Apply search filter
   const filteredRecords = useMemo(() => {
     if (!filter.trim()) return recordsWithStatus;
     const lower = filter.toLowerCase();
@@ -108,37 +58,23 @@ export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId
     );
   }, [recordsWithStatus, filter]);
 
-  // Update cell value
   const updateCellRecord = (rowIndex: number, columnId: string, value: any) => {
     const id = filteredRecords[rowIndex]._id;
-    updateRecord(id ?? "", { ...filteredRecords[rowIndex], [columnId]: value });
+    if (id) updateRecord(id, { ...filteredRecords[rowIndex], [columnId]: value });
   };
 
-  // Export PDF
   const exportToPDF = () => {
     const doc = new jsPDF();
     autoTable(doc, {
-      head: [
-        ["Invoice #", "SKU", "Description", "Quantity", "Amount", "Total Cost", "Arrival", "Expiration", "Days Left", "Remarks", "Status"],
-      ],
+      head: [["Invoice #", "SKU", "Description", "Quantity", "Amount", "Total Cost", "Arrival", "Expiration", "Days Left", "Remarks", "Status"]],
       body: filteredRecords.map((r) => [
-        r.invoiceNumber,
-        r.sku,
-        r.description,
-        r.quantity,
-        r.amount,
-        r.totalCost,
-        formatDate(r.dateOfArrival),
-        formatDate(r.expiration),
-        r.daysLeft,
-        r.remarks,
-        r.status.toUpperCase(),
+        r.invoiceNumber, r.sku, r.description, r.quantity, r.amount, r.totalCost,
+        formatDate(r.dateOfArrival), formatDate(r.expiration), r.daysLeft, r.remarks, r.status.toUpperCase(),
       ]),
     });
     doc.save("inventory_records.pdf");
   };
 
-  // Export Excel
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       filteredRecords.map((r) => ({
@@ -160,34 +96,88 @@ export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId
     XLSX.writeFile(workbook, "inventory_records.xlsx");
   };
 
-  // Table columns
-  const columns: Column<(InventoryRecord & { status: StatusType; daysLeft: number | string })>[] = useMemo(
-    () => [
-      { Header: "Invoice #", accessor: "invoiceNumber" },
-      { Header: "SKU", accessor: "sku" },
-      { Header: "Description", accessor: "description" },
-      { Header: "Quantity", accessor: "quantity" },
-      { Header: "Amount", accessor: "amount" },
-      { Header: "Total Cost", accessor: "totalCost" },
-      { Header: "Date of Arrival", accessor: "dateOfArrival", Cell: ({ value }) => <span>{formatDate(value)}</span> },
-      { Header: "Expiration", accessor: "expiration", Cell: ({ value }) => <span>{formatDate(value)}</span> },
-      { Header: "Days Left", accessor: "daysLeft", Cell: ({ value }) => (
-        <span style={{ color: typeof value === "number" ? (value <= 0 ? "red" : value <= 10 ? "orange" : "green") : "black" }}>
-          {typeof value === "number" ? (value <= 0 ? "Expired" : `${value} days`) : value}
-        </span>
-      ) },
-      { Header: "Remarks", accessor: "remarks" },
-      { Header: "Status", accessor: "status", Cell: ({ value }) => (
-        <span style={{ color: value === "expired" ? "red" : value === "expiring_soon" ? "orange" : "green", fontWeight: "bold" }}>
+  // Editable cell
+  const EditableCell: React.FC<{ value: any; rowIndex: number; columnId: string }> = ({ value, rowIndex, columnId }) => {
+    const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.columnId === columnId;
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      let newValue = e.target.value;
+      if (columnId === "dateOfArrival" || columnId === "expiration") {
+        const [day, month, year] = newValue.split("/");
+        if (day && month && year) {
+          newValue = new Date(+year, +month - 1, +day).toISOString(); // save ISO internally
+        }
+      }
+      updateCellRecord(rowIndex, columnId, newValue);
+      setEditingCell(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+    };
+
+    return isEditing ? (
+      <input
+        autoFocus
+        type="text"
+        defaultValue={(columnId === "dateOfArrival" || columnId === "expiration") && value ? formatDate(value) : value}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        style={{ width: "100%", border: "1px solid #999", padding: "2px 4px", borderRadius: "4px" }}
+      />
+    ) : (
+      <span style={{ cursor: "pointer" }} onClick={() => setEditingCell({ rowIndex, columnId })}>
+        {(columnId === "dateOfArrival" || columnId === "expiration") && value ? formatDate(value) : value}
+      </span>
+    );
+  };
+
+  const columns: Column<any>[] = useMemo(() => [
+    { Header: "Invoice #", accessor: "invoiceNumber", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "SKU", accessor: "sku", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "Description", accessor: "description", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "Quantity", accessor: "quantity", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "Amount", accessor: "amount", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "Total Cost", accessor: "totalCost", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "Arrival", accessor: "dateOfArrival", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    { Header: "Expiration", accessor: "expiration", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    {
+      Header: "Days Left",
+      accessor: "daysLeft",
+      Cell: ({ value }) => <span style={{ color: typeof value === "number" ? (value <= 0 ? "red" : value <= 10 ? "orange" : "green") : "black" }}>{typeof value === "number" ? (value <= 0 ? "Expired" : `${value} days`) : value}</span>
+    },
+    { Header: "Remarks", accessor: "remarks", Cell: ({ value, row, column }) => <EditableCell value={value} rowIndex={row.index} columnId={column.id} /> },
+    {
+      Header: "Status",
+      accessor: "status",
+      Cell: ({ value, row }) => (
+        <span
+          style={{
+            color: value === "expired" ? "red" : value === "expiring_soon" ? "orange" : "green",
+            fontWeight: "bold",
+            cursor: value === "expired" || value === "active" ? "pointer" : "default",
+          }}
+          onClick={() => {
+            const status = row.original.status;
+            if ((status === "expired" || status === "active") && row.original._id) {
+              const confirmDelete = window.confirm(`This record (Invoice #${row.original.invoiceNumber}) is ${status}. Do you want to delete it?`);
+              if (confirmDelete) deleteRecord(row.original._id);
+            }
+          }}
+          onMouseEnter={(e) => {
+            if (value === "expired" || value === "active") (e.currentTarget.style.textDecoration = "underline");
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.textDecoration = "none";
+          }}
+        >
           {value.replace("_", " ").toUpperCase()}
         </span>
-      ) },
-    ],
-    [filteredRecords]
-  );
+      ),
+    },
+  ], [editingCell, deleteRecord]);
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable({ columns, data: filteredRecords });
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data: filteredRecords });
 
   return (
     <div className="table-card">
@@ -199,7 +189,6 @@ export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId
           placeholder="🔍 Search by any field..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="filter-input"
           style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #ccc", marginRight: "0.5rem" }}
         />
         <div style={{ display: "flex", gap: "6px" }}>
@@ -210,11 +199,9 @@ export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId
 
       <table {...getTableProps()} className="styled-table">
         <thead>
-          {headerGroups.map(headerGroup => (
-            <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-              {headerGroup.headers.map(column => (
-                <th {...column.getHeaderProps()} key={column.id}>{column.render("Header")}</th>
-              ))}
+          {headerGroups.map(hg => (
+            <tr {...hg.getHeaderGroupProps()} key={hg.id}>
+              {hg.headers.map(col => <th {...col.getHeaderProps()} key={col.id}>{col.render("Header")}</th>)}
             </tr>
           ))}
         </thead>
@@ -225,9 +212,7 @@ export const InventoryRecordList: React.FC<InventoryRecordListProps> = ({ userId
             const rowStyle = status === "expired" ? { backgroundColor: "#ffe6e6" } : status === "expiring_soon" ? { backgroundColor: "#fff5e6" } : {};
             return (
               <tr {...row.getRowProps()} key={row.id} style={rowStyle}>
-                {row.cells.map(cell => (
-                  <td {...cell.getCellProps()} key={cell.column.id}>{cell.render("Cell")}</td>
-                ))}
+                {row.cells.map(cell => <td {...cell.getCellProps()} key={cell.column.id}>{cell.render("Cell")}</td>)}
               </tr>
             );
           })}
