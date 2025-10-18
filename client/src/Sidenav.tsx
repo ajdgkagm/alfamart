@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import "./sidenav.css"; // import CSS
+import "./Sidenav.css"; // import CSS
 
 import { SignedIn, SignedOut, RedirectToSignIn, UserButton, SignOutButton } from "@clerk/clerk-react";
 
