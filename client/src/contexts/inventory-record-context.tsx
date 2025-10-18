@@ -27,6 +27,10 @@ interface InventoryContextType {
 
 const InventoryRecordContext = createContext<InventoryContextType | undefined>(undefined);
 
+// ✅ Automatically detect environment
+const API_BASE_URL =
+  import.meta.env.MODE === import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
 export const InventoryRecordProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [inventoryRecords, setInventoryRecords] = useState<InventoryRecord[]>([]);
   const { user } = useUser();
@@ -35,9 +39,7 @@ export const InventoryRecordProvider: React.FC<{ children: React.ReactNode }> = 
   const refreshRecords = async () => {
     if (!user?.id) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3001/inventory-records/getAllByUserID/${user.id}`
-      );
+      const res = await axios.get(`${API_BASE_URL}/inventory-records/getAllByUserID/${user.id}`);
       setInventoryRecords(res.data);
     } catch (err) {
       console.error("Error fetching inventory records:", err);
@@ -51,8 +53,8 @@ export const InventoryRecordProvider: React.FC<{ children: React.ReactNode }> = 
   // ✅ Add record + refresh
   const addRecord = async (record: InventoryRecord) => {
     try {
-      await axios.post("http://localhost:3001/inventory-records/create", record);
-      await refreshRecords(); // ⬅ refresh instantly
+      await axios.post(`${API_BASE_URL}/inventory-records/create`, record);
+      await refreshRecords();
     } catch (err) {
       console.error("Error adding record:", err);
     }
@@ -61,8 +63,8 @@ export const InventoryRecordProvider: React.FC<{ children: React.ReactNode }> = 
   // ✅ Update record + refresh
   const updateRecord = async (id: string, updated: Partial<InventoryRecord>) => {
     try {
-      await axios.put(`http://localhost:3001/inventory-records/update/${id}`, updated);
-      await refreshRecords(); // ⬅ refresh instantly
+      await axios.put(`${API_BASE_URL}/inventory-records/update/${id}`, updated);
+      await refreshRecords();
     } catch (err) {
       console.error("Error updating record:", err);
     }
@@ -71,8 +73,8 @@ export const InventoryRecordProvider: React.FC<{ children: React.ReactNode }> = 
   // ✅ Delete record + refresh
   const deleteRecord = async (id: string) => {
     try {
-      await axios.delete(`http://localhost:3001/inventory-records/delete/${id}`);
-      await refreshRecords(); // ⬅ refresh instantly
+      await axios.delete(`${API_BASE_URL}/inventory-records/delete/${id}`);
+      await refreshRecords();
     } catch (err) {
       console.error("Error deleting record:", err);
     }
