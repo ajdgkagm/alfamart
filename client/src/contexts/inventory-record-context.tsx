@@ -29,7 +29,8 @@ const InventoryRecordContext = createContext<InventoryContextType | undefined>(u
 
 // ✅ Automatically detect environment
 const API_BASE_URL =
-  import.meta.env.MODE === import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
 
 export const InventoryRecordProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [inventoryRecords, setInventoryRecords] = useState<InventoryRecord[]>([]);
