@@ -50,7 +50,7 @@ export const InventoryRecordForm = () => {
   // File download helper with userId query
   const handleDownload = (type: "excel" | "pdf") => {
     if (!user?.id) return;
-    const url = `http://localhost:3001/inventory-records/export/${type}?userId=${user.id}`;
+    const url = `https://alfamart-7.onrender.com/inventory-records/export/${type}?userId=${user.id}`;
     window.open(url, "_blank");
   };
 

@@ -25,4 +25,10 @@ setInterval(() => {
 app.listen(port, () => {
     console.log(`Server running on PORT: ${port}`);
 });
+import cors from "cors";
+app.use(cors({
+  origin: ["https://alfamart-frontend.vercel.app", "http://localhost:3001"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 //# sourceMappingURL=index.js.map
