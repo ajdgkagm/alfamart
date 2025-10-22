@@ -14,7 +14,7 @@ export const SideNav = () => {
             {/* Navigation Links */}
             <nav className="sidenav-links">
                 
-                <NavLink to="/test" className="nav-item">
+                <NavLink to="/tasks" className="nav-item">
                     Task Checker
                 </NavLink>
                 <NavLink to="/schedule" className="nav-item">

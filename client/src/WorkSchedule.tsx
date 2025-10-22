@@ -1,189 +1,230 @@
-import { useMemo, useState } from "react";
-import { useTable} from "react-table";
-import type { Column, CellProps } from "react-table";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import "./WorkSchedule.css";
 
-interface WorkScheduleRow {
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
+type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+const DAYS: DayKey[] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const SHIFTS = ["opening", "mid", "closing", "graveyard"];
+
+interface User {
+  _id?: string;
   name: string;
-  mon: string;
-  tue: string;
-  wed: string;
-  thu: string;
-  fri: string;
-  sat: string;
-  sun: string;
+  userId: string;
+  preferences?: Record<DayKey, string>;
+  restDay?: DayKey;
 }
 
-interface EditableCellProps extends CellProps<WorkScheduleRow> {
-  updateSchedule: (rowIndex: number, columnId: string, value: any) => void;
-  editable: boolean;
+interface Schedule {
+  _id?: string;
+  userId: string;
+  name: string;
+  mon?: string;
+  tue?: string;
+  wed?: string;
+  thu?: string;
+  fri?: string;
+  sat?: string;
+  sun?: string;
 }
 
-const EditableCell: React.FC<EditableCellProps> = ({
-  value: initialValue,
-  row,
-  column,
-  updateSchedule,
-  editable,
-}) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(initialValue);
+export default function WorkSchedulePage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [name, setName] = useState("");
+  const [userId, setUserId] = useState("");
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedShift, setSelectedShift] = useState<string>("");
+  const [selectedRestDay, setSelectedRestDay] = useState<DayKey | "">("");
 
-  const onBlur = () => {
-    setIsEditing(false);
-    updateSchedule(row.index, column.id, value);
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get<User[]>(`${API_BASE_URL}/user/getAll`);
+      setUsers(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch users");
+    }
   };
 
-  return (
-    <div
-      onClick={() => editable && setIsEditing(true)}
-      style={{ cursor: editable ? "pointer" : "default" }}
-    >
-      {isEditing ? (
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          autoFocus
-          onBlur={onBlur}
-          className="editable-input"
-        />
-      ) : (
-        value
-      )}
-    </div>
-  );
-};
+  const fetchSchedules = async () => {
+    try {
+      const res = await axios.get<Schedule[]>(
+        `${API_BASE_URL}/work-schedule/getAll`
+      );
+      setSchedules(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-export default function WorkSchedule() {
-  const [schedule, setSchedule] = useState<WorkScheduleRow[]>([
-    { name: "Mafe", mon: "opening", tue: "mid", wed: "closing", thu: "rd", fri: "opening", sat: "closing", sun: "gy" },
-    { name: "Edison", mon: "gy", tue: "gy", wed: "rd", thu: "gy", fri: "closing", sat: "gy", sun: "gy" },
-    { name: "Joe", mon: "closing", tue: "opening", wed: "opening", thu: "closing", fri: "rd", sat: "opening", sun: "closing" },
-    { name: "Ricky", mon: "opening", tue: "closing", wed: "rd", thu: "opening", fri: "closing", sat: "opening", sun: "mid" },
-    { name: "Shenna", mon: "closing", tue: "closing", wed: "opening", thu: "mid", fri: "opening", sat: "closing", sun: "rd" },
-    { name: "Aaron", mon: "rd", tue: "opening", wed: "mid", thu: "closing", fri: "opening", sat: "opening", sun: "closing" },
-    { name: "Lhen", mon: "gy", tue: "gy", wed: "gy", thu: "offset", fri: "rd", sat: "gy", sun: "gy" },
-    { name: "Harve", mon: "opening", tue: "rd", wed: "opening", thu: "closing", fri: "opening", sat: "opening", sun: "opening" },
-  ]);
+  useEffect(() => {
+    fetchUsers();
+    fetchSchedules();
+  }, []);
 
-  const updateSchedule = (rowIndex: number, columnId: string, value: any) => {
-    setSchedule((old) =>
-      old.map((row, index) => {
-        if (index === rowIndex) {
-          return { ...old[rowIndex], [columnId]: value };
-        }
-        return row;
-      })
+  const addUser = async () => {
+    if (!name || !userId) return alert("Enter name and userId");
+    try {
+      await axios.post(`${API_BASE_URL}/user/create`, { name, userId });
+      setName("");
+      setUserId("");
+      await fetchUsers();
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.error || "Failed to add user");
+    }
+  };
+
+  const openPreferenceEditor = (u: User) => {
+    setEditingUser(u);
+    setSelectedShift(u.preferences?.mon || "");
+    setSelectedRestDay(u.restDay || "");
+  };
+
+  const savePreferences = async () => {
+    if (!editingUser) return;
+    const newPrefs: Record<DayKey, string> = DAYS.reduce(
+      (acc, d) => ({ ...acc, [d]: selectedShift }),
+      {} as Record<DayKey, string>
     );
+
+    try {
+      await axios.put(`${API_BASE_URL}/user/preferences/${editingUser._id}`, {
+        preferences: newPrefs,
+        restDay: selectedRestDay,
+      });
+      setEditingUser(null);
+      fetchUsers();
+      alert("Preferences saved!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save preferences");
+    }
   };
 
-  const deleteRow = (index: number) => {
-    setSchedule((prev) => prev.filter((_, i) => i !== index));
+  const generateSchedule = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/work-schedule/generate`);
+      await fetchSchedules();
+      alert("Schedule generated");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate schedule");
+    }
   };
-
-  const columns: Array<Column<WorkScheduleRow>> = useMemo(
-    () => [
-      {
-        Header: "Name",
-        accessor: "name",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Mon",
-        accessor: "mon",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Tue",
-        accessor: "tue",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Wed",
-        accessor: "wed",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Thu",
-        accessor: "thu",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Fri",
-        accessor: "fri",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Sat",
-        accessor: "sat",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Sun",
-        accessor: "sun",
-        Cell: (props) => (
-          <EditableCell {...props} updateSchedule={updateSchedule} editable={true} />
-        ),
-      },
-      {
-        Header: "Delete",
-        id: "delete",
-        Cell: ({ row }) => (
-          <button
-            onClick={() => deleteRow(row.index)}
-            className="button button-danger"
-          >
-            Delete
-          </button>
-        ),
-      },
-    ],
-    [schedule]
-  );
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable({ columns, data: schedule });
 
   return (
-    <div className="table-card">
-      <h2 className="table-title">🗓 Work Schedule</h2>
-      <table {...getTableProps()} className="styled-table">
-        <thead>
-          {headerGroups.map((hg) => (
-            <tr {...hg.getHeaderGroupProps()}>
-              {hg.headers.map((column) => (
-                <th {...column.getHeaderProps()}>{column.render("Header")}</th>
+    <div style={{ padding: 24 }}>
+      <section>
+        <h2>Add User</h2>
+        <input
+          placeholder="userId (unique)"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+        />
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <button onClick={addUser}>Add User</button>
+      </section>
+
+      <section>
+        <h2>Users</h2>
+        <ul>
+          {users.map((u) => (
+            <li key={u._id}>
+              <strong>{u.name}</strong> ({u.userId}){" "}
+              <button onClick={() => openPreferenceEditor(u)}>
+                Set Preference
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2>Generate</h2>
+        <button onClick={generateSchedule}>Generate Schedule</button>
+        <button
+          className="clear-btn"
+          onClick={() =>
+            axios
+              .delete(`${API_BASE_URL}/work-schedule/clearAll`)
+              .then(fetchSchedules)
+          }
+          style={{ marginLeft: 8 }}
+        >
+          Clear All
+        </button>
+      </section>
+
+      <section>
+        <h2>Schedules</h2>
+        <table border={1}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              {DAYS.map((d) => (
+                <th key={d}>{d.toUpperCase()}</th>
               ))}
             </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {rows.map((row) => {
-            prepareRow(row);
-            return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map((cell) => (
-                  <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
+          </thead>
+          <tbody>
+            {schedules.map((s) => (
+              <tr key={s._id}>
+                <td>{s.name}</td>
+                {DAYS.map((d) => (
+                  <td key={d}>{s[d]}</td>
                 ))}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {editingUser && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Set Preference for {editingUser.name}</h3>
+
+            <label>Preferred Shift:</label>
+            <select
+              value={selectedShift}
+              onChange={(e) => setSelectedShift(e.target.value)}
+            >
+              <option value="">No preference</option>
+              {SHIFTS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+
+            <label>Preferred Rest Day:</label>
+            <select
+              value={selectedRestDay}
+              onChange={(e) => setSelectedRestDay(e.target.value as DayKey)}
+            >
+              <option value="">No preference</option>
+              {DAYS.map((d) => (
+                <option key={d} value={d}>
+                  {d.toUpperCase()}
+                </option>
+              ))}
+            </select>
+
+            <div className="modal-actions">
+              <button onClick={savePreferences}>Save</button>
+              <button onClick={() => setEditingUser(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

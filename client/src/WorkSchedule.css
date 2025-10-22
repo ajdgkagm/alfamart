@@ -1,81 +1,158 @@
-.table-card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 25px 30px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  margin: 30px auto;
-  max-width: 1000px;
+/* WorkSchedule.css — Dark Mode (Readable Buttons + Consistent with Sidebar) */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0f172a; /* slate-900 */
+  color: #f9fafb; /* gray-50 */
+  margin: 0;
+  padding: 0;
 }
 
-.table-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 20px;
-  text-align: left;
+h1, h2 {
+  color: #93c5fd; /* blue-300 */
 }
 
-.styled-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.styled-table thead tr {
-  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-  color: white;
-  text-align: left;
-  font-weight: 600;
-}
-
-.styled-table th,
-.styled-table td {
-  padding: 14px 18px;
-  font-size: 14px;
-  border-bottom: 1px solid #eee;
+h1 {
   text-align: center;
+  margin-bottom: 2rem;
 }
 
-.styled-table tbody tr:nth-child(odd) {
-  background: #fafbff;
+/* Section Containers */
+section {
+  background-color: #1e293b; /* slate-800 */
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
-.styled-table tbody tr:hover {
-  background: #f1f5ff;
-}
-
-/* Editable input */
-.editable-input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #dcdcdc;
-  border-radius: 8px;
+/* Inputs */
+input {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #334155; /* slate-700 */
+  color: #f9fafb;
+  margin-right: 10px;
   font-size: 14px;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-.editable-input:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
-  outline: none;
+input::placeholder {
+  color: #94a3b8;
 }
 
-.button {
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-weight: 600;
+/* --- Buttons --- */
+button {
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: #f9fafb; /* readable white text */
+  font-weight: 500;
 }
 
-.button-danger {
-  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-  color: white;
+button:hover {
+  transform: scale(1.03);
+  opacity: 0.95;
 }
 
-.button-danger:hover {
-  opacity: 0.9;
+/* === Primary Action (Add, Generate, Save, Set Preference) === */
+button,
+button.add-btn,
+button.generate-btn,
+button.save-btn {
+  background-color: #2563eb; /* blue-600 */
+}
+
+button:hover,
+button.add-btn:hover,
+button.generate-btn:hover,
+button.save-btn:hover {
+  background-color: #1d4ed8; /* blue-700 */
+}
+
+/* === Secondary Action (Edit) === */
+button.edit-btn {
+  background-color: #16a34a; /* green-600 */
+}
+button.edit-btn:hover {
+  background-color: #15803d;
+}
+
+/* === Destructive Action (Clear, Cancel) === */
+button.clear-btn,
+button.cancel-btn {
+  background-color: #dc2626; /* red-600 */
+}
+button.clear-btn:hover,
+button.cancel-btn:hover {
+  background-color: #b91c1c;
+}
+
+/* Lists */
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #334155;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+li:hover {
+  background-color: #475569;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 10px 12px;
+  border: 1px solid #334155;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background-color: #334155;
+  color: #93c5fd;
+}
+
+td {
+  color: #e2e8f0;
+}
+
+tr:nth-child(even) {
+  background-color: #273449;
+}
+
+tr:hover {
+  background-color: #3b495f;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  input, button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

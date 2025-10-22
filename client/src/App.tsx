@@ -7,7 +7,10 @@ import { SignedIn, SignedOut, RedirectToSignIn, UserButton } from "@clerk/clerk-
 import { SideNav } from "./Sidenav";
 import { InventoryRecordForm } from "./InventoryRecordForm";
 import WorkSchedule from "./WorkSchedule";
+import TodoTasks from "./TodoTasks"; // adjust path if needed
+
 import { InventoryRecordProvider } from "./contexts/inventory-record-context";
+
 function App() {
   return (
     <Router>
@@ -36,6 +39,7 @@ function App() {
           />
           <Route path="/auth" element={<Auth />} />
           <Route path='/schedule' element={<WorkSchedule/>}/>
+          <Route path="/tasks" element={<TodoTasks />} />
           <Route path='/products' element={<InventoryRecordForm/>}/>
         </Routes>
         </InventoryRecordProvider>
