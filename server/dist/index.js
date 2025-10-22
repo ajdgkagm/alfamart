@@ -5,6 +5,9 @@ import cors from "cors";
 import inventoryRecordRouter from "./routes/inventory-records.js";
 import financialRecordRouter from "./routes/financial-records.js";
 import { checkExpiringInventory } from "./utils/checkExpiration.js";
+import workScheduleRouter from "./routes/work-schedule.js";
+import todoTaskRouter from "../src/routes/todo-tasks.js";
+import userRoutes from "./routes/user.js";
 const app = express();
 const port = process.env.PORT || 3001;
 // Middleware
@@ -13,6 +16,9 @@ app.use(cors());
 // Routers
 app.use("/inventory-records", inventoryRecordRouter);
 app.use("/financial-records", financialRecordRouter);
+app.use("/work-schedule", workScheduleRouter);
+app.use("/user", userRoutes);
+app.use("/todo", todoTaskRouter);
 // MongoDB connection
 const mongoURI = process.env.MONGO_URI;
 if (!mongoURI) {
