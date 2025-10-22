@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useUser } from "@clerk/clerk-react"; // ✅ Import Clerk user
 import "./TodoTasks.css";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+  import.meta.env.VITE_API_BASE_URL
+    ? `${import.meta.env.VITE_API_BASE_URL}/todo`
+    : "http://localhost:3001/todo";
 
 interface Task {
   _id: string;
@@ -16,6 +19,9 @@ interface Task {
 }
 
 const TodoTasks: React.FC = () => {
+  const { user } = useUser(); // ✅ Get logged-in user
+  const userId = user?.id; // Clerk gives a unique user ID like "user_32gwYdR9vEzxXMWZPVZ0RPLR34z"
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTask, setNewTask] = useState("");
   const [taskDate, setTaskDate] = useState(
@@ -28,21 +34,20 @@ const TodoTasks: React.FC = () => {
     new Date().toISOString().split("T")[0]
   );
 
-  const userId = "user_123"; // Replace with actual logged-in user
-
+  /** 🔍 Fetch tasks by specific date */
   const fetchTasksByDate = async (date: string) => {
+    if (!userId) return; // Wait until user is loaded
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}/getByDate/${userId}/${date}`
-      );
+      const res = await axios.get(`${API_BASE_URL}/getByDate/${userId}/${date}`);
       setTasks(res.data);
     } catch (err) {
       console.error("Error fetching tasks by date:", err);
     }
   };
 
+  /** ➕ Add new task */
   const addTask = async () => {
-    if (!newTask.trim()) return;
+    if (!userId || !newTask.trim()) return;
     try {
       const res = await axios.post(`${API_BASE_URL}/add`, {
         userId,
@@ -56,6 +61,7 @@ const TodoTasks: React.FC = () => {
     }
   };
 
+  /** ✅ Toggle task completion */
   const toggleDone = async (id: string) => {
     try {
       const res = await axios.put(`${API_BASE_URL}/toggle/${id}`);
@@ -67,6 +73,7 @@ const TodoTasks: React.FC = () => {
     }
   };
 
+  /** 💾 Save task edits */
   const saveEdit = async (id: string) => {
     try {
       const res = await axios.put(`${API_BASE_URL}/edit/${id}`, {
@@ -82,6 +89,7 @@ const TodoTasks: React.FC = () => {
     }
   };
 
+  /** 🗑️ Delete single task */
   const deleteTask = async (id: string) => {
     try {
       await axios.delete(`${API_BASE_URL}/delete/${id}`);
@@ -91,7 +99,9 @@ const TodoTasks: React.FC = () => {
     }
   };
 
+  /** ⚠️ Clear all tasks */
   const clearAllTasks = async () => {
+    if (!userId) return;
     try {
       await axios.delete(`${API_BASE_URL}/clearAll/${userId}`);
       setTasks([]);
@@ -101,8 +111,11 @@ const TodoTasks: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTasksByDate(searchDate);
-  }, [searchDate]);
+    if (userId) fetchTasksByDate(searchDate);
+  }, [searchDate, userId]);
+
+  if (!userId)
+    return <p className="empty">Loading user info from Clerk...</p>;
 
   return (
     <div className="todo-container">
@@ -159,7 +172,9 @@ const TodoTasks: React.FC = () => {
               <>
                 <div className="task-info">
                   <span>{task.title}</span>
-                  <small>📅 {new Date(task.taskDate).toLocaleDateString()}</small>
+                  <small>
+                    📅 {new Date(task.taskDate).toLocaleDateString()}
+                  </small>
                 </div>
                 <div className="actions">
                   <button onClick={() => toggleDone(task._id)}>
